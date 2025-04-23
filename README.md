@@ -1,4 +1,3 @@
-# Apple-Hub
 shared.LoaderTitle = "Apple hub,";
 shared.LoaderKeyFrames = {
     [1] = {
