@@ -1,0 +1,240 @@
+--==================================================
+-- HUY UI LIBRARY | FULL VERSION
+-- PC + MOBILE | by Huy
+--==================================================
+
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+--==================================================
+-- LIBRARY
+--==================================================
+local Library = {}
+Library.__index = Library
+
+--==================================================
+-- CREATE WINDOW
+--==================================================
+function Library:CreateWindow(title)
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "HuyUI"
+    gui.ResetOnSpawn = false
+    gui.Parent = LP:WaitForChild("PlayerGui")
+
+    local main = Instance.new("Frame", gui)
+    main.Size = UDim2.fromOffset(520, 360)
+    main.Position = UDim2.fromScale(0.5, 0.5)
+    main.AnchorPoint = Vector2.new(0.5, 0.5)
+    main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    main.BorderSizePixel = 0
+
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
+
+    --================ TITLE BAR =================
+    local titleBar = Instance.new("TextLabel", main)
+    titleBar.Size = UDim2.new(1,0,0,40)
+    titleBar.Text = title or "Huy Hub"
+    titleBar.Font = Enum.Font.GothamBold
+    titleBar.TextSize = 16
+    titleBar.TextColor3 = Color3.new(1,1,1)
+    titleBar.BackgroundColor3 = Color3.fromRGB(18,18,18)
+    titleBar.BorderSizePixel = 0
+
+    Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0,12)
+
+    -- Drag main
+    local dragging, dragStart, startPos
+    titleBar.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+        or i.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = i.Position
+            startPos = main.Position
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(i)
+        if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement
+        or i.UserInputType == Enum.UserInputType.Touch) then
+            local delta = i.Position - dragStart
+            main.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+        or i.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    --================ TAB BAR =================
+    local tabBar = Instance.new("Frame", main)
+    tabBar.Position = UDim2.fromOffset(0,40)
+    tabBar.Size = UDim2.new(0,140,1,-40)
+    tabBar.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    tabBar.BorderSizePixel = 0
+
+    local tabLayout = Instance.new("UIListLayout", tabBar)
+    tabLayout.Padding = UDim.new(0,6)
+
+    local pages = Instance.new("Frame", main)
+    pages.Position = UDim2.fromOffset(140,40)
+    pages.Size = UDim2.new(1,-140,1,-40)
+    pages.BackgroundTransparency = 1
+
+    local Window = {}
+    local currentPage
+
+    --==================================================
+    -- ADD TAB
+    --==================================================
+    function Window:AddTab(name)
+        local tabBtn = Instance.new("TextButton", tabBar)
+        tabBtn.Size = UDim2.new(1,-10,0,36)
+        tabBtn.Position = UDim2.fromOffset(5,0)
+        tabBtn.Text = name
+        tabBtn.Font = Enum.Font.Gotham
+        tabBtn.TextSize = 14
+        tabBtn.TextColor3 = Color3.new(1,1,1)
+        tabBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        tabBtn.BorderSizePixel = 0
+        Instance.new("UICorner", tabBtn)
+
+        local page = Instance.new("ScrollingFrame", pages)
+        page.Size = UDim2.new(1,0,1,0)
+        page.CanvasSize = UDim2.new(0,0,0,0)
+        page.ScrollBarImageTransparency = 1
+        page.Visible = false
+        page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+        local layout = Instance.new("UIListLayout", page)
+        layout.Padding = UDim.new(0,6)
+
+        tabBtn.MouseButton1Click:Connect(function()
+            if currentPage then currentPage.Visible = false end
+            page.Visible = true
+            currentPage = page
+        end)
+
+        if not currentPage then
+            page.Visible = true
+            currentPage = page
+        end
+
+        local Tab = {}
+
+        --================ BUTTON =================
+        function Tab:AddButton(text, cb)
+            local b = Instance.new("TextButton", page)
+            b.Size = UDim2.new(1,-12,0,36)
+            b.Position = UDim2.fromOffset(6,0)
+            b.Text = text
+            b.Font = Enum.Font.Gotham
+            b.TextSize = 14
+            b.TextColor3 = Color3.new(1,1,1)
+            b.BackgroundColor3 = Color3.fromRGB(45,45,45)
+            b.BorderSizePixel = 0
+            Instance.new("UICorner", b)
+            b.MouseButton1Click:Connect(function()
+                if cb then cb() end
+            end)
+        end
+
+        --================ TOGGLE =================
+        function Tab:AddToggle(text, cb)
+            local state = false
+            local t = Instance.new("TextButton", page)
+            t.Size = UDim2.new(1,-12,0,36)
+            t.Position = UDim2.fromOffset(6,0)
+            t.Text = text .. " : OFF"
+            t.Font = Enum.Font.Gotham
+            t.TextSize = 14
+            t.TextColor3 = Color3.new(1,1,1)
+            t.BackgroundColor3 = Color3.fromRGB(45,45,45)
+            t.BorderSizePixel = 0
+            Instance.new("UICorner", t)
+
+            t.MouseButton1Click:Connect(function()
+                state = not state
+                t.Text = text .. (state and " : ON" or " : OFF")
+                if cb then cb(state) end
+            end)
+        end
+
+        --================ SLIDER =================
+        function Tab:AddSlider(text, min, max, def, cb)
+            local val = def or min
+            local l = Instance.new("TextLabel", page)
+            l.Size = UDim2.new(1,-12,0,36)
+            l.Position = UDim2.fromOffset(6,0)
+            l.Text = text .. " : " .. val
+            l.Font = Enum.Font.Gotham
+            l.TextSize = 14
+            l.TextColor3 = Color3.new(1,1,1)
+            l.BackgroundColor3 = Color3.fromRGB(45,45,45)
+            l.BorderSizePixel = 0
+            Instance.new("UICorner", l)
+
+            l.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    val = math.clamp(val + 1, min, max)
+                    l.Text = text .. " : " .. val
+                    if cb then cb(val) end
+                end
+            end)
+        end
+
+        --================ DROPDOWN =================
+        function Tab:AddDropdown(text, list, cb)
+            local d = Instance.new("TextButton", page)
+            d.Size = UDim2.new(1,-12,0,36)
+            d.Position = UDim2.fromOffset(6,0)
+            d.Text = text
+            d.Font = Enum.Font.Gotham
+            d.TextSize = 14
+            d.TextColor3 = Color3.new(1,1,1)
+            d.BackgroundColor3 = Color3.fromRGB(45,45,45)
+            d.BorderSizePixel = 0
+            Instance.new("UICorner", d)
+
+            local i = 1
+            d.MouseButton1Click:Connect(function()
+                i = i + 1
+                if i > #list then i = 1 end
+                d.Text = text .. " : " .. list[i]
+                if cb then cb(list[i]) end
+            end)
+        end
+
+        return Tab
+    end
+
+    --================ MOBILE TOGGLE =================
+    local toggleBtn = Instance.new("TextButton", gui)
+    toggleBtn.Size = UDim2.fromOffset(50,50)
+    toggleBtn.Position = UDim2.fromScale(0.05,0.5)
+    toggleBtn.Text = "UI"
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.TextSize = 14
+    toggleBtn.TextColor3 = Color3.new(1,1,1)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    toggleBtn.BorderSizePixel = 0
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1,0)
+
+    local visible = true
+    toggleBtn.MouseButton1Click:Connect(function()
+        visible = not visible
+        main.Visible = visible
+    end)
+
+    return Window
+end
+
+return setmetatable({}, Library)
