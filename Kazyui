@@ -1,0 +1,183 @@
+--[[
+    KAZY UI LIBRARY - PHIÊN BẢN MOBILE CHỐNG DÍNH
+    Developer: Huy (Support for Gà)
+    Name: Kazy
+]]
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local Kazy = {}
+
+function Kazy:CreateWindow(HubName)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "Kazy_UI"
+    ScreenGui.Parent = game.CoreGui
+    ScreenGui.ResetOnSpawn = false
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 320, 0, 260)
+    MainFrame.Position = UDim2.new(0.5, -160, 0.5, -130)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = ScreenGui
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+
+    -- TopBar (Vùng nắm để kéo)
+    local TopBar = Instance.new("Frame")
+    TopBar.Size = UDim2.new(1, 0, 0, 35)
+    TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TopBar.Parent = MainFrame
+    Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
+
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, -10, 1, 0)
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.Text = HubName .. " | Kazy UI"
+    Title.TextColor3 = Color3.fromRGB(255, 165, 0)
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.BackgroundTransparency = 1
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.Parent = TopBar
+
+    -- Vùng chứa nội dung (Scrolling)
+    local Content = Instance.new("ScrollingFrame")
+    Content.Size = UDim2.new(1, -10, 1, -45)
+    Content.Position = UDim2.new(0, 5, 0, 40)
+    Content.BackgroundTransparency = 1
+    Content.ScrollBarThickness = 2
+    Content.BorderSizePixel = 0
+    Content.Parent = MainFrame
+
+    local Layout = Instance.new("UIListLayout", Content)
+    Layout.Padding = UDim.new(0, 8)
+    Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    -- [Hệ thống kéo thả Heartbeat cho Oppo A53]
+    local dragging, dragInput, dragStart, startPos
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true; dragStart = input.Position; startPos = MainFrame.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MousePointer) then
+            dragInput = input
+        end
+    end)
+    RunService.Heartbeat:Connect(function()
+        if dragging and dragInput then
+            local delta = dragInput.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false; dragInput = nil
+        end
+    end)
+
+    local Elements = {}
+
+    -- [Hàm cập nhật vùng cuộn]
+    local function UpdateCanvas()
+        Content.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
+    end
+
+    -- ELEMENT 1: BUTTON
+    function Elements:AddButton(info)
+        local Btn = Instance.new("TextButton")
+        Btn.Size = UDim2.new(0.95, 0, 0, 35)
+        Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        Btn.Text = info.Name
+        Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Btn.Font = Enum.Font.Gotham
+        Btn.Parent = Content
+        Instance.new("UICorner", Btn)
+
+        Btn.MouseButton1Click:Connect(info.Callback)
+        UpdateCanvas()
+    end
+
+    -- ELEMENT 2: TOGGLE
+    function Elements:AddToggle(info)
+        local state = false
+        local Tgl = Instance.new("TextButton")
+        Tgl.Size = UDim2.new(0.95, 0, 0, 38)
+        Tgl.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        Tgl.Text = "  " .. info.Name
+        Tgl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Tgl.TextXAlignment = Enum.TextXAlignment.Left
+        Tgl.Font = Enum.Font.Gotham
+        Tgl.Parent = Content
+        Instance.new("UICorner", Tgl)
+
+        local Status = Instance.new("Frame")
+        Status.Size = UDim2.new(0, 22, 0, 22)
+        Status.Position = UDim2.new(0.88, 0, 0.2, 0)
+        Status.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        Status.Parent = Tgl
+        Instance.new("UICorner", Status).CornerRadius = UDim.new(1, 0)
+
+        Tgl.MouseButton1Click:Connect(function()
+            state = not state
+            Status.BackgroundColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            info.Callback(state)
+        end)
+        UpdateCanvas()
+    end
+
+    -- ELEMENT 3: SLIDER
+    function Elements:AddSlider(info)
+        local SliderFrame = Instance.new("Frame")
+        SliderFrame.Size = UDim2.new(0.95, 0, 0, 45)
+        SliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        SliderFrame.Parent = Content
+        Instance.new("UICorner", SliderFrame)
+
+        local Label = Instance.new("TextLabel")
+        Label.Text = "  " .. info.Name .. ": " .. info.Default
+        Label.Size = UDim2.new(1, 0, 0, 20)
+        Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Label.BackgroundTransparency = 1
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.Parent = SliderFrame
+
+        local Bar = Instance.new("Frame")
+        Bar.Size = UDim2.new(0.9, 0, 0, 6)
+        Bar.Position = UDim2.new(0.05, 0, 0.7, 0)
+        Bar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        Bar.Parent = SliderFrame
+        Instance.new("UICorner", Bar)
+
+        local Fill = Instance.new("Frame")
+        Fill.Size = UDim2.new((info.Default-info.Min)/(info.Max-info.Min), 0, 1, 0)
+        Fill.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+        Fill.Parent = Bar
+        Instance.new("UICorner", Fill)
+
+        local function Move(input)
+            local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+            Fill.Size = UDim2.new(pos, 0, 1, 0)
+            local val = math.floor(info.Min + (info.Max - info.Min) * pos)
+            Label.Text = "  " .. info.Name .. ": " .. val
+            info.Callback(val)
+        end
+
+        Bar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                local con; con = UserInputService.InputChanged:Connect(function(i)
+                    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then Move(i) end
+                end)
+                UserInputService.InputEnded:Connect(function() con:Disconnect() end)
+            end
+        end)
+        UpdateCanvas()
+    end
+
+    return Elements
+end
+
+return Kazy
