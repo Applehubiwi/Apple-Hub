@@ -1,5 +1,6 @@
--- v1prware | maintained by V1PR | original by Glovsaken
-print("v1prware loaded")
+-just get its with no credit
+
+print("Mangz loaded")
 
 ------------------------------------------------------------------------
 -- services
