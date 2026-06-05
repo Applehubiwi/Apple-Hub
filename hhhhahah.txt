@@ -1,0 +1,173 @@
+-- =========================================================================
+-- BẢN SCRIPT TEST MẪU (DEMO) CÁC ELEMENT CỦA MANGZ HUB V3 - PHẦN 1
+-- =========================================================================
+
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local plr = game.Players.LocalPlayer
+local PlayerGui = plr:WaitForChild("PlayerGui")
+
+local MangzLib = {}
+
+local function makeDraggable(guiObject)
+    local dragging, dragInput, dragStart, startPos
+    guiObject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragStart = input.Position; startPos = guiObject.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+        end
+    end)
+    guiObject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            guiObject.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+local notifScreen = Instance.new("ScreenGui", PlayerGui)
+notifScreen.Name = "MangzHubNotif"; notifScreen.ResetOnSpawn = false
+local notifHolder = Instance.new("Frame", notifScreen)
+notifHolder.Size = UDim2.new(0, 250, 1, 0); notifHolder.Position = UDim2.new(1, -260, 0, 10); notifHolder.BackgroundTransparency = 1
+local notifLayout = Instance.new("UIListLayout", notifHolder); notifLayout.Padding = UDim.new(0, 8)
+
+function MangzLib:Notification(title, text, duration)
+    local duration = duration or 3
+    local notifFrame = Instance.new("Frame", notifHolder)
+    notifFrame.Size = UDim2.new(1, 0, 0, 65); notifFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    Instance.new("UICorner", notifFrame).CornerRadius = UDim.new(0, 6)
+    local nStroke = Instance.new("UIStroke", notifFrame); nStroke.Color = Color3.fromRGB(212, 175, 55)
+    local nTitle = Instance.new("TextLabel", notifFrame)
+    nTitle.Size = UDim2.new(1, -10, 0, 20); nTitle.Position = UDim2.new(0, 10, 0, 5); nTitle.BackgroundTransparency = 1
+    nTitle.Text = title; nTitle.TextColor3 = Color3.fromRGB(212, 175, 55); nTitle.Font = Enum.Font.SourceSansBold; nTitle.TextSize = 14; nTitle.TextXAlignment = Enum.TextXAlignment.Left
+    local nDesc = Instance.new("TextLabel", notifFrame)
+    nDesc.Size = UDim2.new(1, -10, 0, 35); nDesc.Position = UDim2.new(0, 10, 0, 25); nDesc.BackgroundTransparency = 1
+    nDesc.Text = text; nDesc.TextColor3 = Color3.fromRGB(200, 200, 200); nDesc.Font = Enum.Font.SourceSans; nDesc.TextSize = 13; nDesc.TextWrapped = true; nDesc.TextXAlignment = Enum.TextXAlignment.Left
+    task.delay(duration, function() pcall(function() notifFrame:Destroy() end) end)
+end
+
+function MangzLib:CreateWindow(hubTitle)
+    if PlayerGui:FindFirstChild("MangzHubCoreUI") then PlayerGui.MangzHubCoreUI:Destroy() end
+    local screenGui = Instance.new("ScreenGui", PlayerGui); screenGui.Name = "MangzHubCoreUI"; screenGui.ResetOnSpawn = false
+    local mainFrame = Instance.new("Frame", screenGui)
+    mainFrame.Size = UDim2.new(0, 440, 0, 290); mainFrame.Position = UDim2.new(0.5, -220, 0.5, -145); mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
+    local mainStroke = Instance.new("UIStroke", mainFrame); mainStroke.Color = Color3.fromRGB(212, 175, 55); mainStroke.Thickness = 1.5; makeDraggable(mainFrame)
+    local titleBar = Instance.new("TextLabel", mainFrame)
+    titleBar.Size = UDim2.new(1, 0, 0, 40); titleBar.BackgroundColor3 = Color3.fromRGB(22, 22, 22); titleBar.Text = "  " .. tostring(hubTitle); titleBar.TextColor3 = Color3.fromRGB(212, 175, 55); titleBar.Font = Enum.Font.SourceSansBold; titleBar.TextSize = 16; titleBar.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 10)
+    local tabContainer = Instance.new("Frame", mainFrame)
+    tabContainer.Size = UDim2.new(0, 100, 1, -45); tabContainer.Position = UDim2.new(0, 5, 0, 42); tabContainer.BackgroundTransparency = 1
+    local tabLayout = Instance.new("UIListLayout", tabContainer); tabLayout.Padding = UDim.new(0, 4)
+    local contentContainer = Instance.new("Frame", mainFrame)
+    contentContainer.Size = UDim2.new(1, -115, 1, -45); contentContainer.Position = UDim2.new(0, 110, 0, 42); contentContainer.BackgroundTransparency = 1
+    local toggleBtn = Instance.new("TextButton", screenGui)
+    toggleBtn.Size = UDim2.new(0, 45, 0, 45); toggleBtn.Position = UDim2.new(0.02, 0, 0.2, 0); toggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); toggleBtn.Text = "MZ"; toggleBtn.TextColor3 = Color3.fromRGB(212, 175, 55); toggleBtn.Font = Enum.Font.SourceSansBold; toggleBtn.TextSize = 16; toggleBtn.ZIndex = 10
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+    local btnStroke = Instance.new("UIStroke", toggleBtn); btnStroke.Color = Color3.fromRGB(212, 175, 55); makeDraggable(toggleBtn)
+    toggleBtn.MouseButton1Click:Connect(function() mainFrame.Visible = not mainFrame.Visible end)
+    local WindowData = { ActiveTabBtn = nil, ActiveTabFrame = nil }
+        function WindowData:CreateTab(tabName)
+        local tabBtn = Instance.new("TextButton", tabContainer)
+        tabBtn.Size = UDim2.new(1, 0, 0, 32); tabBtn.Text = tabName; tabBtn.Font = Enum.Font.SourceSansBold; tabBtn.TextSize = 14; tabBtn.TextColor3 = Color3.fromRGB(150, 150, 150); tabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
+        local tabScrollFrame = Instance.new("ScrollingFrame", contentContainer)
+        tabScrollFrame.Size = UDim2.new(1, 0, 1, 0); tabScrollFrame.BackgroundTransparency = 1; tabScrollFrame.Visible = false; tabScrollFrame.ScrollBarThickness = 4; tabScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(212, 175, 55)
+        local elementLayout = Instance.new("UIListLayout", tabScrollFrame); elementLayout.Padding = UDim.new(0, 6)
+        elementLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() tabScrollFrame.CanvasSize = UDim2.new(0, 0, 0, elementLayout.AbsoluteContentSize.Y + 10) end)
+        tabBtn.MouseButton1Click:Connect(function()
+            if WindowData.ActiveTabBtn then TweenService:Create(WindowData.ActiveTabBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 150), BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play(); WindowData.ActiveTabFrame.Visible = false end
+            WindowData.ActiveTabBtn = tabBtn; WindowData.ActiveTabFrame = tabScrollFrame
+            TweenService:Create(tabBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(212, 175, 55), BackgroundColor3 = Color3.fromRGB(35, 35, 35)}):Play(); tabScrollFrame.Visible = true
+        end)
+        if WindowData.ActiveTabBtn == nil then WindowData.ActiveTabBtn = tabBtn; WindowData.ActiveTabFrame = tabScrollFrame; tabBtn.TextColor3 = Color3.fromRGB(212, 175, 55); tabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35); tabScrollFrame.Visible = true end
+        local TabElements = {}
+
+        function TabElements:CreateSection(sectionText)
+            local secFrame = Instance.new("Frame", tabScrollFrame); secFrame.Size = UDim2.new(1, -6, 0, 25); secFrame.BackgroundTransparency = 1
+            local secLabel = Instance.new("TextLabel", secFrame); secLabel.Size = UDim2.new(1, 0, 1, 0); secLabel.Text = "— " .. tostring(sectionText) .. " —"; secLabel.TextColor3 = Color3.fromRGB(212, 175, 55); secLabel.Font = Enum.Font.SourceSansBold; secLabel.TextSize = 13; secLabel.BackgroundTransparency = 1; secLabel.TextXAlignment = Enum.TextXAlignment.Left
+        end
+        function TabElements:CreateButton(btnText, callback)
+            local callback = callback or function() end
+            local button = Instance.new("TextButton", tabScrollFrame); button.Size = UDim2.new(1, -6, 0, 35); button.Text = btnText; button.Font = Enum.Font.SourceSansBold; button.TextColor3 = Color3.fromRGB(15, 15, 15); button.BackgroundColor3 = Color3.fromRGB(212, 175, 55)
+            Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+            button.MouseButton1Click:Connect(function() pcall(callback) end)
+        end
+        function TabElements:CreateToggle(toggleText, default, callback)
+            local callback = callback or function() end; local toggled = default or false
+            local toggleFrame = Instance.new("Frame", tabScrollFrame); toggleFrame.Size = UDim2.new(1, -6, 0, 38); toggleFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+            Instance.new("UICorner", toggleFrame).CornerRadius = UDim.new(0, 6)
+            local tLabel = Instance.new("TextLabel", toggleFrame); tLabel.Size = UDim2.new(1, -50, 1, 0); tLabel.Position = UDim2.new(0, 10, 0, 0); tLabel.Text = toggleText; tLabel.TextColor3 = Color3.fromRGB(200, 200, 200); tLabel.Font = Enum.Font.SourceSansSemibold; tLabel.TextSize = 14; tLabel.BackgroundTransparency = 1; tLabel.TextXAlignment = Enum.TextXAlignment.Left
+            local switchBg = Instance.new("Frame", toggleFrame); switchBg.Size = UDim2.new(0, 34, 0, 18); switchBg.Position = UDim2.new(1, -44, 0.5, -9); switchBg.BackgroundColor3 = toggled and Color3.fromRGB(212, 175, 55) or Color3.fromRGB(40, 40, 40)
+            Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1, 0)
+            local switchBall = Instance.new("Frame", switchBg); switchBall.Size = UDim2.new(0, 14, 0, 14); switchBall.Position = toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7); switchBall.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+            Instance.new("UICorner", switchBall).CornerRadius = UDim.new(1, 0)
+            local clickBtn = Instance.new("TextButton", toggleFrame); clickBtn.Size = UDim2.new(1, 0, 1, 0); clickBtn.BackgroundTransparency = 1; clickBtn.Text = ""
+            clickBtn.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                if toggled then TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(212, 175, 55)}):Play(); TweenService:Create(switchBall, TweenInfo.new(0.2), {Position = UDim2.new(1, -16, 0.5, -7)}):Play()
+                else TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play(); TweenService:Create(switchBall, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -7)}):Play() end
+                pcall(callback, toggled)
+            end)
+        end
+        function TabElements:CreateSlider(sliderText, min, max, default, callback)
+            local callback = callback or function() end; local value = default or min
+            local sliderFrame = Instance.new("Frame", tabScrollFrame); sliderFrame.Size = UDim2.new(1, -6, 0, 45); sliderFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+            Instance.new("UICorner", sliderFrame).CornerRadius = UDim.new(0, 6)
+            local sLabel = Instance.new("TextLabel", sliderFrame); sLabel.Size = UDim2.new(0.7, 0, 0, 20); sLabel.Position = UDim2.new(0, 10, 0, 4); sLabel.Text = sliderText; sLabel.TextColor3 = Color3.fromRGB(200, 200, 200); sLabel.Font = Enum.Font.SourceSansSemibold; sLabel.TextXAlignment = Enum.TextXAlignment.Left; sLabel.BackgroundTransparency = 1
+            local vLabel = Instance.new("TextLabel", sliderFrame); vLabel.Size = UDim2.new(0.3, -10, 0, 20); vLabel.Position = UDim2.new(0.7, 0, 0, 4); vLabel.Text = tostring(value); vLabel.TextColor3 = Color3.fromRGB(212, 175, 55); vLabel.Font = Enum.Font.SourceSansBold; vLabel.TextXAlignment = Enum.TextXAlignment.Right; vLabel.BackgroundTransparency = 1
+            local sliderBarBg = Instance.new("TextButton", sliderFrame); sliderBarBg.Size = UDim2.new(1, -20, 0, 6); sliderBarBg.Position = UDim2.new(0, 10, 1, -12); sliderBarBg.BackgroundColor3 = Color3.fromRGB(45, 45, 45); sliderBarBg.Text = ""
+            Instance.new("UICorner", sliderBarBg).CornerRadius = UDim.new(1, 0)
+            local sliderBarFill = Instance.new("Frame", sliderBarBg); sliderBarFill.Size = UDim2.new((value - min) / (max - min), 0, 1, 0); sliderBarFill.BackgroundColor3 = Color3.fromRGB(212, 175, 55)
+            Instance.new("UICorner", sliderBarFill).CornerRadius = UDim.new(1, 0)
+            local isDragging = false
+            local function updateSlider(input)
+                local percentage = math.clamp((input.Position.X - sliderBarBg.AbsolutePosition.X) / sliderBarBg.AbsoluteSize.X, 0, 1)
+                sliderBarFill.Size = UDim2.new(percentage, 0, 1, 0); value = math.floor(min + (max - min) * percentage); vLabel.Text = tostring(value); pcall(callback, value)
+            end
+            sliderBarBg.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isDragging = true; updateSlider(input) end end)
+            UserInputService.InputChanged:Connect(function(input) if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then updateSlider(input) end end)
+            UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isDragging = false end end)
+        end
+        function TabElements:CreateDropdown(dropText, listOptions, callback)
+            local callback = callback or function() end; local open = false
+            local dropMainFrame = Instance.new("Frame", tabScrollFrame); dropMainFrame.Size = UDim2.new(1, -6, 0, 38); dropMainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22); dropMainFrame.ClipsDescendants = true
+            Instance.new("UICorner", dropMainFrame).CornerRadius = UDim.new(0, 6)
+            local clickBtn = Instance.new("TextButton", dropMainFrame); clickBtn.Size = UDim2.new(1, 0, 0, 38); clickBtn.Text = "  " .. dropText .. "  v"; clickBtn.Font = Enum.Font.SourceSansSemibold; clickBtn.TextColor3 = Color3.fromRGB(200, 200, 200); clickBtn.BackgroundColor3 = Color3.fromRGB(26, 26, 26); clickBtn.TextXAlignment = Enum.TextXAlignment.Left
+            Instance.new("UICorner", clickBtn).CornerRadius = UDim.new(0, 6)
+            local optionContainer = Instance.new("Frame", dropMainFrame); optionContainer.Size = UDim2.new(1, 0, 0, #listOptions * 30); optionContainer.Position = UDim2.new(0, 0, 0, 38); optionContainer.BackgroundTransparency = 1
+            local optLayout = Instance.new("UIListLayout", optionContainer); optLayout.Padding = UDim.new(0, 2)
+            for _, optionName in ipairs(listOptions) do
+                local optBtn = Instance.new("TextButton", optionContainer); optBtn.Size = UDim2.new(1, 0, 0, 28); optBtn.Text = "     " .. optionName; optBtn.Font = Enum.Font.SourceSans; optBtn.TextColor3 = Color3.fromRGB(160, 160, 160); optBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); optBtn.TextXAlignment = Enum.TextXAlignment.Left; optBtn.BorderSizePixel = 0
+                optBtn.MouseButton1Click:Connect(function() clickBtn.Text = "  " .. dropText .. ": " .. optionName .. "  v"; open = false; dropMainFrame.Size = UDim2.new(1, -6, 0, 38); pcall(callback, optionName) end)
+            end
+            clickBtn.MouseButton1Click:Connect(function() open = not open; dropMainFrame.Size = open and UDim2.new(1, -6, 0, 38 + (#listOptions * 30)) or UDim2.new(1, -6, 0, 38) end)
+        end
+        function TabElements:CreateTextBox(placeholder, callback)
+            local callback = callback or function() end
+            local tBox = Instance.new("TextBox", tabScrollFrame); tBox.Size = UDim2.new(1, -6, 0, 35); tBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25); tBox.Text = ""; tBox.PlaceholderText = placeholder; tBox.TextColor3 = Color3.fromRGB(255, 255, 255); tBox.Font = Enum.Font.SourceSansSemibold; tBox.TextSize = 14
+            Instance.new("UICorner", tBox).CornerRadius = UDim.new(0, 6)
+            local boxStroke = Instance.new("UIStroke", tBox); boxStroke.Color = Color3.fromRGB(60, 60, 60)
+            tBox.FocusLost:Connect(function() pcall(callback, tBox.Text) end)
+        end
+        function TabElements:CreateColorPicker(pickerText, defaultColor, callback)
+            local callback = callback or function() end; local currentPassedColor = defaultColor or Color3.fromRGB(212, 175, 55)
+            local cpFrame = Instance.new("Frame", tabScrollFrame); cpFrame.Size = UDim2.new(1, -6, 0, 45); cpFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+            Instance.new("UICorner", cpFrame).CornerRadius = UDim.new(0, 6)
+            local cpLabel = Instance.new("TextLabel", cpFrame); cpLabel.Size = UDim2.new(0.6, 0, 0, 20); cpLabel.Position = UDim2.new(0, 10, 0, 4); cpLabel.Text = pickerText; cpLabel.TextColor3 = Color3.fromRGB(200, 200, 200); cpLabel.Font = Enum.Font.SourceSansSemibold; cpLabel.TextSize = 14; cpLabel.BackgroundTransparency = 1; cpLabel.TextXAlignment = Enum.TextXAlignment.Left
+            local colorShowcase = Instance.new("Frame", cpFrame); colorShowcase.Size = UDim2.new(0, 30, 0, 16); colorShowcase.Position = UDim2.new(1, -40, 0, 6); colorShowcase.BackgroundColor3 = currentPassedColor
+            Instance.new("UICorner", colorShowcase).CornerRadius = UDim.new(0, 4); local csStroke = Instance.new("UIStroke", colorShowcase); csStroke.Color = Color3.fromRGB(60, 60, 60)
+            local hueBar = Instance.new("ImageButton", cpFrame); hueBar.Size = UDim2.new(1, -20, 0, 8); hueBar.Position = UDim2.new(0, 10, 1, -12); hueBar.BorderSizePixel = 0; hueBar.Image = "rbxassetid://3641079629"
+            Instance.new("UICorner", hueBar).CornerRadius = UDim.new(1, 0); local isDraggingCP = false
+            local function updateColor(input) local percentage = math.clamp((input.Position.X - hueBar.AbsolutePosition.X) / hueBar.AbsoluteSize.X, 0, 1); local newColor = Color3.fromHSV(percentage, 1, 1); colorShowcase.BackgroundColor3 = newColor; pcall(callback, newColor) end
+            hueBar.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isDraggingCP = true; updateColor(input) end end)
+            hueBar.InputChanged:Connect(function(input) if isDraggingCP and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then updateColor(input) end end)
+            hueBar.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then isDraggingCP = false end end)
+        end
+        return TabElements
+    end
+    return WindowData
+end
